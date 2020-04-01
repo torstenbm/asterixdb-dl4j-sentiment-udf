@@ -37,7 +37,7 @@ public class CharVec {
                 if (tweetsRead >= 1600000) {
                     break;
                 }
-                String tweetText = tweet[1].replaceAll("\"", "");
+                String tweetText = tweet[5].replaceAll("\"", "");
 
                 for (char c : tweetText.toCharArray()) {
                     if (charOccurences.get(c) != null){

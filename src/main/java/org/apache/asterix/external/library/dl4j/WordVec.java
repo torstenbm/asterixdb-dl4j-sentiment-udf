@@ -40,7 +40,7 @@ public class WordVec {
                 if (tweetsRead >= 1600000) {
                     break;
                 }
-                String tweetText = tweet[1].replaceAll("\"", "");
+                String tweetText = tweet[5].replaceAll("\"", "");
                 
                 String[] words = tweetText.replaceAll("[^a-zA-Z ]", "").toLowerCase().split("\\s+");
 
