@@ -21,9 +21,9 @@
   <libraryFunctions>
     <libraryFunction>
       <function_type>SCALAR</function_type>
-      <name>DL4JClassify</name>
-      <argument_type>TweetType[]</argument_type>
-      <return_type>TweetType[]</return_type>
+      <name>RNNClassify</name>
+      <argument_type>[TweetType]</argument_type>
+      <return_type>[TweetType]</return_type>
       <definition>
         org.apache.asterix.external.library.LSTMWordVecSentimentFactory
       </definition>
