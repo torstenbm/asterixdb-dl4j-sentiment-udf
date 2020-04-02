@@ -102,7 +102,7 @@ public class LSTMWordVecSentimentFunction implements IExternalScalarFunction {
         System.out.println("Wordvectors initialized");
 
         System.out.println("Initialization of Neural Net started");
-        File f = new File("/Users/torsten/deeplearning4j-twitter-sentiment-rnn/asterix-dl4j-udf/src/main/java/org/apache/asterix/external/library/dl4j/1m_rnn_customizedWordVec_model.zip");
+        File f = new File("/lhome/torstebm/asterixdb-dl4j-sentiment-udf/src/main/java/org/apache/asterix/external/library/dl4j/1m_rnn_customizedWordVec_model.zip");
         boolean saveUpdater = false;
         net = MultiLayerNetwork.load(f, saveUpdater);
         System.out.println("Neural Net Initialized");
