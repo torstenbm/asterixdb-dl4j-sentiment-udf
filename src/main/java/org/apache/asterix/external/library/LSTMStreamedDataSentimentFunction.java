@@ -46,6 +46,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
     public WordVec customizedWordVec;
     public long startTime;
     public double[][] tweetVectorBatch;
+    public JRecord[] outputRecords;
 
 
     @Override
@@ -56,7 +57,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
         // startTime = System.nanoTime();
 
         // Read input records
-        JList inputRecord = (JRecord) functionHelper.getArgument(0);
+        JRecord inputRecord = (JRecord) functionHelper.getArgument(0);
 
 
         // Extract and process text of tweet
@@ -137,14 +138,14 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
             // max size of batch for BATCHED mode. you should set this value with respect to your environment (i.e. gpu memory amounts)
             .batchLimit(15000)
             // set this value to number of available computational devices, either CPUs or GPUs
-            .workers(2)s
+            .workers(2)
             .build();
         System.out.println("Parallel inference initialized");
 
 
         // Initialize batch 
-        double[][] tweetVectorBatch = new double[batchSize][vectorLength];
+        tweetVectorBatch = new double[batchSize][vectorLength];
         batchPointer = 0;
-        JRecord[] outputRecords = new JRecord[batchSize];
+        outputRecords = new JRecord[batchSize];
     }
 }
