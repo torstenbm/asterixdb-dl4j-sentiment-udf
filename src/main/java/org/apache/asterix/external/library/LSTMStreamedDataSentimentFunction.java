@@ -71,7 +71,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
         outputRecords[batchPointer] = outputRecord;
         batchPointer++;
-        
+
         // Put record in batch and keep track of output order
         tweetVectorBatch[batchPointer] = tweetVector;
 
@@ -92,7 +92,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
             // Return results to AsterixDB
             for (int i = 0; i < batchSize; i++){
                 String sentiment = predictedSentiments[i] == 0 ? "positive" : "negative";
-                outputRecords[i].setField("sentiment", sentiment);
+                outputRecords[i].setField("sentiment", new JString(sentiment));
                 
                 functionHelper.setResult(outputRecord);
             }
