@@ -21,11 +21,11 @@ package org.apache.asterix.external.library;
 import org.apache.asterix.external.api.IExternalScalarFunction;
 import org.apache.asterix.external.api.IFunctionFactory;
 
-public class LSTMWordVecSentimentFactory implements IFunctionFactory {
+public class LSTMStreamedDataSentimentFactory implements IFunctionFactory {
 
     @Override
     public IExternalScalarFunction getExternalFunction() {
-        return new LSTMWordVecSentimentFunction();
+        return new LSTMStreamedDataSentimentFunction();
     }
 
 }

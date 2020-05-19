@@ -25,7 +25,16 @@
       <argument_type>[TweetType]</argument_type>
       <return_type>[TweetType]</return_type>
       <definition>
-        org.apache.asterix.external.library.LSTMWordVecSentimentFactory
+        org.apache.asterix.external.library.LSTMStoredDataSentimentFactory
+      </definition>
+    </libraryFunction>
+    <libraryFunction>
+      <function_type>SCALAR</function_type>
+      <name>RNNClassify</name>
+      <argument_type>TweetType</argument_type>
+      <return_type>TweetType</return_type>
+      <definition>
+        org.apache.asterix.external.library.LSTMStreamedDataSentimentFactory
       </definition>
     </libraryFunction>
   </libraryFunctions>

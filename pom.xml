@@ -7,8 +7,8 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <!-- Change the nd4j.backend property to nd4j-cuda-9.2-platform,nd4j-cuda-10.0-platform or nd4j-cuda-10.1-platform to use CUDA GPUs -->
-        <nd4j.backend>nd4j-native-platform</nd4j.backend>
-        <!-- <nd4j.backend>nd4j-cuda-10.1-platform</nd4j.backend> -->
+        <!-- <nd4j.backend>nd4j-native-platform</nd4j.backend>s -->
+        <nd4j.backend>nd4j-cuda-10.1-platform</nd4j.backend>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shadedClassifier>bin</shadedClassifier>
 
@@ -20,7 +20,6 @@
         <arbiter.version>1.0.0-beta6</arbiter.version>
         <rl4j.version>1.0.0-beta6</rl4j.version>
 
-        <!-- Scala binary version: DL4J's Spark and UI functionality are released with both Scala 2.10 and 2.11 support -->
         <scala.binary.version>2.11</scala.binary.version>
         <spark.version>2.4.3</spark.version>
 
@@ -105,7 +104,6 @@
             <artifactId>deeplearning4j-parallel-wrapper</artifactId>
             <version>${dl4j.version}</version>
         </dependency>
-
 
         <!-- CSV-reader for the training data -->
         <dependency>

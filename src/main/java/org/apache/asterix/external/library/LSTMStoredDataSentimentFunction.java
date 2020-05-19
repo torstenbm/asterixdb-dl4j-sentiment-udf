@@ -36,18 +36,21 @@ import org.deeplearning4j.parallelism.inference.InferenceMode;
 import java.io.File;
 
 
-public class LSTMWordVecSentimentFunction implements IExternalScalarFunction {
-    private JString sentiment;
+public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction {
+    private int batchSize;
     private int vectorLength;
     public MultiLayerNetwork net;
     public ParallelInference piModel;
     public WordVec customizedWordVec;
+    public long startTime;
 
     @Override
     public void deinitialize() {}
 
     @Override
     public void evaluate(IFunctionHelper functionHelper) throws Exception {
+        startTime = System.nanoTime();
+
         // Read input records
         JList inputRecords = (JList) functionHelper.getArgument(0);
         int numRecords = inputRecords.size();
@@ -60,6 +63,7 @@ public class LSTMWordVecSentimentFunction implements IExternalScalarFunction {
         for (int i = 0; i < numRecords; i++){
             JRecord tweetRecord = (JRecord) inputRecords.getElement(i);
             JString tweetText = (JString) tweetRecord.getValueByName("text");
+            
 
             tweetVectorBatch[i] = customizedWordVec.sentenceToWordVec(tweetText.getValue(), vectorLength);
         }
@@ -77,13 +81,28 @@ public class LSTMWordVecSentimentFunction implements IExternalScalarFunction {
 
         // Populate output list with enriched tweets
         JList outputRecords = (JList) functionHelper.getResultObject();
-        for (int i = 0; i < numRecords; i++){
-            JRecord tweetRecord = (JRecord) inputRecords.getElement(i);
-            String sentiment = predictedSentiments[i] == 1 ? "positive" : "negative";
-            tweetRecord.setField("sentiment", new JString(sentiment));
-            outputRecords.add(tweetRecord);
-        }
 
+        int unprocessedRecords = numRecords;
+        int currentBatch = 0;
+        while (unprocessedRecords > 0){
+            if (unprocessedRecords > batchSize) {
+                currentBatch = currentBatch + batchSize;
+            } else {
+                currentBatch = currentBatch + unprocessedRecords;
+            }
+            for (int i = 0; i < currentBatch; i++){
+                JRecord tweetRecord = (JRecord) inputRecords.getElement(i);
+                String sentiment = predictedSentiments[i] == 0 ? "positive" : "negative";
+                tweetRecord.setField("sentiment", new JString(sentiment));
+                outputRecords.add(tweetRecord);
+            }
+            unprocessedRecords = unprocessedRecords - batchSize;
+        }
+        
+        // Tracking processing time
+        long totalTime = (System.nanoTime() - startTime);
+        System.out.println("Total classification time: " + String.valueOf(totalTime) + " nanoseconds");
+        
         // Set result
         functionHelper.setResult(outputRecords);
     }
@@ -93,12 +112,17 @@ public class LSTMWordVecSentimentFunction implements IExternalScalarFunction {
         // Number of words to allow in vector.
         vectorLength = 30;
 
+        // Number of records to process at a time.
+        batchSize = 100000;
+
         //https://deeplearning4j.org/workspaces
         Nd4j.getMemoryManager().setAutoGcWindow(10000);
 
         System.out.println("Started loading wordvectors");
-        WordVec customizeWordVec = new WordVec();
-        customizeWordVec.initialize();
+        customizedWordVec = new WordVec();
+
+        
+        customizedWordVec.initialize();
         System.out.println("Wordvectors initialized");
 
         System.out.println("Initialization of Neural Net started");
