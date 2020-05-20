@@ -21,7 +21,7 @@
   <libraryFunctions>
     <libraryFunction>
       <function_type>SCALAR</function_type>
-      <name>RNNClassify</name>
+      <name>LSTMClassifyStored</name>
       <argument_type>[TweetType]</argument_type>
       <return_type>[TweetType]</return_type>
       <definition>
@@ -30,7 +30,7 @@
     </libraryFunction>
     <libraryFunction>
       <function_type>SCALAR</function_type>
-      <name>RNNClassify</name>
+      <name>LSTMClassifyStream</name>
       <argument_type>TweetType</argument_type>
       <return_type>TweetType</return_type>
       <definition>

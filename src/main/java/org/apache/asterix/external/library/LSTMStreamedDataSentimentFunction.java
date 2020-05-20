@@ -54,8 +54,6 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
     @Override
     public void evaluate(IFunctionHelper functionHelper) throws Exception {
-        // startTime = System.nanoTime();
-
         // Read input records
         JRecord inputRecord = (JRecord) functionHelper.getArgument(0);
 
@@ -71,13 +69,15 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
         outputRecord.setField("id", tweetID);
 
         outputRecords[batchPointer] = outputRecord;
-        batchPointer++;
 
         // Put record in batch and keep track of output order
         tweetVectorBatch[batchPointer] = tweetVector;
+        batchPointer++;
 
         // If batch is full
         if (batchPointer >= batchSize){
+            System.out.println("Records batched and ready for processing");
+
             // Convert tweetBatch to format understandable by DL4J neural networks
             INDArray features = Nd4j.create(tweetVectorBatch);
 
@@ -91,6 +91,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
             double[] predictedSentiments = probabilitiesAtLastWord.argMax(1).toDoubleVector();
         
             // Return results to AsterixDB
+            System.out.println("Batch processed, time to write results");
             for (int i = 0; i < batchSize; i++){
                 String sentiment = predictedSentiments[i] == 0 ? "positive" : "negative";
                 outputRecords[i].setField("sentiment", new JString(sentiment));
@@ -100,10 +101,15 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
             // Reset batch pointer
             batchPointer = 0;
+        } else {
+            // Else, do nothing
+        }
+        
+        if (tweetID.getValue() == 999999){
+            long totalTime = (System.nanoTime() - startTime);
+            System.out.println("Total classification time: " + String.valueOf(totalTime) + " nanoseconds");
         }
 
-        // Else, do nothing
-        
     }
 
     @Override
@@ -126,11 +132,11 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
         System.out.println("Initialization of Neural Net started");
         File f = new File("/lhome/torstebm/asterixdb-dl4j-sentiment-udf/src/main/java/org/apache/asterix/external/library/dl4j/1m_rnn_customizedWordVec_model.zip");
-        boolean saveUpdater = false;
+        boolean saveUpdater = false;    
         net = MultiLayerNetwork.load(f, saveUpdater);
         System.out.println("Neural Net Initialized");
 
-        // TODO: Load ParallelInference model directly
+        // TODO: Load ParallelInference model directly to shorten initialize function
         System.out.println("Initializing Parallel Inference");
         piModel = new ParallelInference.Builder(net)
             // BATCHED mode is kind of optimization: if number of incoming requests is too high - PI will be batching individual queries into single batch. If number of requests will be low - queries will be processed without batching
@@ -147,5 +153,7 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
         tweetVectorBatch = new double[batchSize][vectorLength];
         batchPointer = 0;
         outputRecords = new JRecord[batchSize];
+
+        startTime = System.nanoTime();
     }
 }
