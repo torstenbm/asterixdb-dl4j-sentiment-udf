@@ -120,9 +120,6 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
         // Number of records to process at a time.
         batchSize = 100000;
 
-        //https://deeplearning4j.org/workspaces
-        Nd4j.getMemoryManager().setAutoGcWindow(10000);
-
         System.out.println("Started loading wordvectors");
         customizedWordVec = new WordVec();
 

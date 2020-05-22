@@ -14,11 +14,11 @@
 
 
         <java.version>1.8</java.version>
-        <nd4j.version>1.0.0-beta6</nd4j.version>
-        <dl4j.version>1.0.0-beta6</dl4j.version>
-        <datavec.version>1.0.0-beta6</datavec.version>
-        <arbiter.version>1.0.0-beta6</arbiter.version>
-        <rl4j.version>1.0.0-beta6</rl4j.version>
+        <nd4j.version>1.0.0-beta7</nd4j.version>
+        <dl4j.version>1.0.0-beta7</dl4j.version>
+        <datavec.version>1.0.0-beta7</datavec.version>
+        <arbiter.version>1.0.0-beta7</arbiter.version>
+        <rl4j.version>1.0.0-beta7</rl4j.version>
 
         <scala.binary.version>2.11</scala.binary.version>
         <spark.version>2.4.3</spark.version>
@@ -47,10 +47,8 @@
         <dependency>
             <groupId>org.apache.asterix</groupId>
             <artifactId>asterix-external-data</artifactId>
-            <version>0.9.4.1</version>
-            <scope>provided</scope>
+            <version>0.9.5-SNAPSHOT</version>
         </dependency>
-
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native-platform</artifactId>
@@ -116,7 +114,7 @@
         <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>javacpp</artifactId>
-            <version>1.5.2</version>
+            <version>1.5.3</version>
         </dependency>
 
         <dependency>
