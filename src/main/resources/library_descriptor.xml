@@ -32,7 +32,7 @@
       <function_type>SCALAR</function_type>
       <name>LSTMClassifyStream</name>
       <argument_type>TweetType</argument_type>
-      <return_type>TweetType</return_type>
+      <return_type>TweetBatch</return_type>
       <definition>
         org.apache.asterix.external.library.LSTMStreamedDataSentimentFactory
       </definition>

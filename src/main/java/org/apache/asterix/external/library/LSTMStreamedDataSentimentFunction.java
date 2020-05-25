@@ -22,9 +22,12 @@ import org.apache.asterix.external.api.IExternalScalarFunction;
 import org.apache.asterix.external.api.IFunctionHelper;
 import org.apache.asterix.external.library.java.base.JList;
 import org.apache.asterix.external.library.java.base.JLong;
+import org.apache.asterix.external.library.java.base.JBoolean;
 import org.apache.asterix.external.library.java.base.JRecord;
 import org.apache.asterix.external.library.java.base.JString;
+import org.apache.asterix.external.library.java.base.JOrderedList;
 import org.apache.asterix.external.library.dl4j.WordVec;
+import org.apache.asterix.om.types.BuiltinType;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -54,30 +57,29 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
     @Override
     public void evaluate(IFunctionHelper functionHelper) throws Exception {
-        // Read input records
-        JRecord inputRecord = (JRecord) functionHelper.getArgument(0);
+        startTime = System.nanoTime();
 
+        // Get input record/tweet
+        JRecord inputRecord = (JRecord) functionHelper.getArgument(0);
 
         // Extract and process text of tweet
         JString tweetText = (JString) inputRecord.getValueByName("text");
         JLong tweetID = (JLong) inputRecord.getValueByName("id");
         double[] tweetVector = customizedWordVec.sentenceToWordVec(tweetText.getValue(), vectorLength);
 
-        // Add corresponding output record to list
+        // Add record to list
         JRecord outputRecord = (JRecord) functionHelper.getResultObject();
         outputRecord.setField("text", tweetText);
         outputRecord.setField("id", tweetID);
 
-        outputRecords[batchPointer] = outputRecord;
-
-        // Put record in batch and keep track of output order
+        // Build batch of vectors to be processed by RNN, while keeping track of
+        // order for when we must match RNN sentiment output with record after processing
+        outputRecords[batchPointer] = inputRecord;
         tweetVectorBatch[batchPointer] = tweetVector;
         batchPointer++;
 
         // If batch is full
         if (batchPointer >= batchSize){
-            System.out.println("Records batched and ready for processing");
-
             // Convert tweetBatch to format understandable by DL4J neural networks
             INDArray features = Nd4j.create(tweetVectorBatch);
 
@@ -90,26 +92,42 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
             // Convert to double array with an entry of 1 corresponding to positive and 0 to negative
             double[] predictedSentiments = probabilitiesAtLastWord.argMax(1).toDoubleVector();
         
-            // Return results to AsterixDB
-            System.out.println("Batch processed, time to write results");
+            // Init list of processed tweets that will be a field of the return record,
+            // accessed through TweetBatch.tweets through SQL++ in the AsterixDB query interface
+            JOrderedList tweetBatch = new JOrderedList(BuiltinType.ANY);
+
+            // Loop through batch of input records, add sentiment field and add to list 
             for (int i = 0; i < batchSize; i++){
                 String sentiment = predictedSentiments[i] == 0 ? "positive" : "negative";
                 outputRecords[i].setField("sentiment", new JString(sentiment));
-                
-                functionHelper.setResult(outputRecord);
+                tweetBatch.add(outputRecords[i]);
             }
 
-            // Reset batch pointer
-            batchPointer = 0;
-        } else {
-            // Else, do nothing
-        }
-        
-        if (tweetID.getValue() == 999999){
-            long totalTime = (System.nanoTime() - startTime);
-            System.out.println("Total classification time: " + String.valueOf(totalTime) + " nanoseconds");
-        }
+            // Get and populate output record
+            JRecord tweetBatchObject = (JRecord) functionHelper.getResultObject();
+            tweetBatchObject.setField("id", tweetID);
+            tweetBatchObject.setField("isMaster", new JBoolean(true));
+            tweetBatchObject.setField("tweets", tweetBatch);
 
+            // Set result object
+            functionHelper.setResult(tweetBatchObject);
+ 
+            // Reset batch pointer as we prepare next batch
+            batchPointer = 0;
+
+            long totalTime = (System.nanoTime() - startTime);
+            System.out.println("Batch time: " + String.valueOf(totalTime) + " nanoseconds");
+            startTime = System.nanoTime(); 
+
+        } else {
+            // Return dummy record due to UDF contract of every input needing an output
+            JRecord tweetBatchObject = (JRecord) functionHelper.getResultObject();
+            JOrderedList tweetBatch = new JOrderedList(BuiltinType.ANY);
+            tweetBatchObject.setField("id", tweetID);
+            tweetBatchObject.setField("tweets", tweetBatch);
+            tweetBatchObject.setField("isMaster", new JBoolean(false));
+            functionHelper.setResult(tweetBatchObject);
+        }
     }
 
     @Override
@@ -122,8 +140,6 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
 
         System.out.println("Started loading wordvectors");
         customizedWordVec = new WordVec();
-
-        
         customizedWordVec.initialize();
         System.out.println("Wordvectors initialized");
 
@@ -136,21 +152,18 @@ public class LSTMStreamedDataSentimentFunction implements IExternalScalarFunctio
         // TODO: Load ParallelInference model directly to shorten initialize function
         System.out.println("Initializing Parallel Inference");
         piModel = new ParallelInference.Builder(net)
-            // BATCHED mode is kind of optimization: if number of incoming requests is too high - PI will be batching individual queries into single batch. If number of requests will be low - queries will be processed without batching
             .inferenceMode(InferenceMode.BATCHED)
-            // max size of batch for BATCHED mode. you should set this value with respect to your environment (i.e. gpu memory amounts)
+            // max size of batch for BATCHED mode. Set with respect to your environment (i.e. gpu memory)
             .batchLimit(15000)
-            // set this value to number of available computational devices, either CPUs or GPUs
+            // set this value to number of available computational devices
             .workers(2)
             .build();
         System.out.println("Parallel inference initialized");
 
 
-        // Initialize batch 
+        // Initialize batching data structures
         tweetVectorBatch = new double[batchSize][vectorLength];
-        batchPointer = 0;
         outputRecords = new JRecord[batchSize];
-
-        startTime = System.nanoTime();
+        batchPointer = 0;
     }
 }

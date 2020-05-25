@@ -20,7 +20,8 @@ package org.apache.asterix.external.library;
 
 import org.apache.asterix.external.api.IExternalScalarFunction;
 import org.apache.asterix.external.api.IFunctionHelper;
-import org.apache.asterix.external.library.java.base.JList;
+import org.apache.asterix.external.api.IJObject;
+import org.apache.asterix.external.library.java.base.JOrderedList;
 import org.apache.asterix.external.library.java.base.JRecord;
 import org.apache.asterix.external.library.java.base.JString;
 import org.apache.asterix.external.library.dl4j.WordVec;
@@ -34,6 +35,8 @@ import org.deeplearning4j.parallelism.ParallelInference;
 import org.deeplearning4j.parallelism.inference.InferenceMode;
 
 import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction {
@@ -52,7 +55,8 @@ public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction 
         startTime = System.nanoTime();
 
         // Read input records
-        JList inputRecords = (JList) functionHelper.getArgument(0);
+        JOrderedList inputRecordsOrdered = (JOrderedList) functionHelper.getArgument(0);
+        List<IJObject> inputRecords = inputRecordsOrdered.getValue();
         int numRecords = inputRecords.size();
 
         // Initialize batch
@@ -61,7 +65,7 @@ public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction 
 
         // Convert tweets to vectors and put in batch
         for (int i = 0; i < numRecords; i++){
-            JRecord tweetRecord = (JRecord) inputRecords.getElement(i);
+            JRecord tweetRecord = (JRecord) inputRecords.get(i);
             JString tweetText = (JString) tweetRecord.getValueByName("text");
             
 
@@ -80,7 +84,7 @@ public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction 
         double[] predictedSentiments = probabilitiesAtLastWord.argMax(1).toDoubleVector();
 
         // Populate output list with enriched tweets
-        JList outputRecords = (JList) functionHelper.getResultObject();
+        List<IJObject> outputRecords = new ArrayList<IJObject>();
 
         int unprocessedRecords = numRecords;
         int currentBatch = 0;
@@ -91,7 +95,7 @@ public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction 
                 currentBatch = currentBatch + unprocessedRecords;
             }
             for (int i = 0; i < currentBatch; i++){
-                JRecord tweetRecord = (JRecord) inputRecords.getElement(i);
+                JRecord tweetRecord = (JRecord) inputRecords.get(i);
                 String sentiment = predictedSentiments[i] == 0 ? "positive" : "negative";
                 tweetRecord.setField("sentiment", new JString(sentiment));
                 outputRecords.add(tweetRecord);
@@ -104,7 +108,8 @@ public class LSTMStoredDataSentimentFunction implements IExternalScalarFunction 
         System.out.println("Total classification time: " + String.valueOf(totalTime) + " nanoseconds");
         
         // Set result
-        functionHelper.setResult(outputRecords);
+        JOrderedList outputRecordsOrdered = (JOrderedList) functionHelper.getResultObject();
+        functionHelper.setResult(outputRecordsOrdered);
     }
 
     @Override
