@@ -25,7 +25,7 @@
       <argument_type>[TweetType]</argument_type>
       <return_type>[TweetType]</return_type>
       <definition>
-        org.apache.asterix.external.library.LSTMStoredDataSentimentFactory
+        org.apache.asterix.external.library.StoredDataLSTMSentimentFactory
       </definition>
     </libraryFunction>
     <libraryFunction>
@@ -34,7 +34,16 @@
       <argument_type>TweetType</argument_type>
       <return_type>TweetBatch</return_type>
       <definition>
-        org.apache.asterix.external.library.LSTMStreamedDataSentimentFactory
+        org.apache.asterix.external.library.StreamedRecordsLSTMSentimentFactory
+      </definition>
+    </libraryFunction>
+    <libraryFunction>
+      <function_type>SCALAR</function_type>
+      <name>LSTMClassifyBatchStream</name>
+      <argument_type>TweetBatch</argument_type>
+      <return_type>TweetBatch</return_type>
+      <definition>
+        org.apache.asterix.external.library.StreamedListsLSTMSentimentFactory
       </definition>
     </libraryFunction>
   </libraryFunctions>
